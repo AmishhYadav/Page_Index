@@ -8,7 +8,7 @@ A phased execution plan to build an enterprise-grade hierarchical RAG system. We
 
 - [ ] **Phase 1: Foundation (Database & Architecture)** - Config, Modularity, Base FastAPI, Docker, Models with constraints.
 - [x] **Phase 2: Ingestion Pipeline** - PDF parsing, embedding generation, and dual-db insertion. (completed 2026-02-28)
-- [ ] **Phase 3: Retrieval & LLM Generation** - Strict hierarchical search contract and citation-backed answer generation.
+- [x] **Phase 3: Retrieval & LLM Generation** - Strict hierarchical search contract and citation-backed answer generation. (completed 2026-02-28)
 
 ## Phase Details
 
@@ -69,4 +69,4 @@ Phases execute in numeric order: 1 → 2 → 3
 |-------|----------------|--------|-----------|
 | 1. Foundation | 0/4 | Not started | - |
 | 2. Ingestion Pipeline | 0/3 | Complete    | 2026-02-28 |
-| 3. Retrieval & LLM Gen | 0/3 | Not started | - |
+| 3. Retrieval & LLM Gen | 0/3 | Complete    | 2026-02-28 |
