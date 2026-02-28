@@ -70,3 +70,22 @@ Phases execute in numeric order: 1 → 2 → 3
 | 1. Foundation | 0/4 | Not started | - |
 | 2. Ingestion Pipeline | 0/3 | Complete    | 2026-02-28 |
 | 3. Retrieval & LLM Gen | 0/3 | Complete    | 2026-02-28 |
+
+### Phase 4: Retrieval Intelligence Upgrade
+**Goal**: Upgrade the retrieval pipeline from vector-only to a production-grade hybrid system with re-ranking, intelligent context packing, and deterministic citation enforcement.
+**Depends on**: Phase 3
+**Requirements**: RTRV-04, RTRV-05, RTRV-06, RTRV-07, RTRV-08
+**Success Criteria** (what must be TRUE):
+  1. Retrieval combines dense (vector) and sparse (BM25) signals using Reciprocal Rank Fusion.
+  2. Users can filter retrieval by document ID, filename, page range, or date.
+  3. A cross-encoder re-ranker promotes truly relevant sections above false positives.
+  4. Context packing respects a configurable token budget and drops low-relevance/duplicate sections.
+  5. Every citation in the final answer is validated against actual source context; unverifiable citations are flagged.
+**Plans**: 5 plans
+
+Plans:
+- [ ] 04-01: Implement hybrid retrieval (Vector + BM25) with Reciprocal Rank Fusion.
+- [ ] 04-02: Add metadata-aware filtering (document scope, page range, date range).
+- [ ] 04-03: Integrate cross-encoder re-ranking layer (sentence-transformers).
+- [ ] 04-04: Build context window packing optimizer (token budget, dedup, threshold).
+- [ ] 04-05: Implement deterministic citation validator (structured output + post-generation verification).
