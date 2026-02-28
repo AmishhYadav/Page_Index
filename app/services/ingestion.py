@@ -64,6 +64,15 @@ class IngestionService:
             db_doc.status = "indexed"
             self.db.commit()
             self.db.refresh(db_doc)
+
+            # Populate search_vector for BM25 full-text search
+            from sqlalchemy import text as sa_text
+            self.db.execute(sa_text(
+                "UPDATE sections SET search_vector = to_tsvector('english', content) "
+                "WHERE search_vector IS NULL AND page_id IN "
+                "(SELECT id FROM pages WHERE document_id = :doc_id)"
+            ), {"doc_id": str(db_doc.id)})
+            self.db.commit()
             
             logger.info(f"Persisted hierarchy for '{filename}' to PostgreSQL. Total sections: {len(sections_to_embed)}")
 

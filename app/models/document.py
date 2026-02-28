@@ -1,6 +1,6 @@
 import uuid
-from sqlalchemy import Column, Integer, String, Text, ForeignKey, UniqueConstraint, DateTime
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import Column, Integer, String, Text, ForeignKey, UniqueConstraint, DateTime, Index
+from sqlalchemy.dialects.postgresql import UUID, TSVECTOR
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.models.base import Base
@@ -38,9 +38,12 @@ class Section(Base):
     section_index = Column(Integer, nullable=False)
     title = Column(String, nullable=True)
     content = Column(Text, nullable=False)
+    search_vector = Column(TSVECTOR, nullable=True)
 
     page = relationship("Page", back_populates="sections")
 
     __table_args__ = (
         UniqueConstraint('page_id', 'section_index', name='uq_page_section'),
+        Index('ix_sections_search_vector', 'search_vector', postgresql_using='gin'),
     )
+

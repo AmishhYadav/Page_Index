@@ -1,8 +1,12 @@
 from sqlalchemy.orm import Session
+from sqlalchemy import text
 from qdrant_client.http.models import Filter
 from app.db.qdrant import get_qdrant_client
 from app.services.embeddings import get_embedding_provider
+from app.services.bm25_retriever import BM25Retriever
+from app.services.fusion import rrf_fuse
 from app.models.document import Document, Page, Section
+from app.core.config import settings
 from typing import List, Dict, Any, Optional
 import logging
 
@@ -46,20 +50,37 @@ class RetrievalResult:
 
 class RetrievalService:
     """
-    Orchestrates hierarchical semantic search:
-    1. Embed query → Qdrant similarity search → top-K Section UUIDs
-    2. Fetch canonical Section → Page → Document hierarchy from PostgreSQL
-    3. Return structured results with full metadata for citation
+    Orchestrates hybrid hierarchical search:
+    1. Dense: Embed query → Qdrant similarity search → top-K Section UUIDs
+    2. Sparse: BM25 keyword search via PostgreSQL tsvector
+    3. Fuse both signals via Reciprocal Rank Fusion (RRF)
+    4. Fetch canonical Section → Page → Document hierarchy from PostgreSQL
+    5. Return structured results with full metadata for citation
     """
 
     def __init__(self, db: Session):
         self.db = db
         self.qdrant_client = get_qdrant_client()
         self.embedding_provider = get_embedding_provider()
+        self.bm25_retriever = BM25Retriever(db)
+
+    def _vector_search(self, query: str, top_k: int) -> List[tuple]:
+        """Dense vector search via Qdrant."""
+        query_vector = self.embedding_provider.embed([query])[0]
+        logger.info(f"Embedded query, searching Qdrant for top-{top_k} sections")
+
+        qdrant_response = self.qdrant_client.query_points(
+            collection_name="sections",
+            query=query_vector,
+            limit=top_k,
+        )
+
+        qdrant_hits = qdrant_response.points if qdrant_response else []
+        return [(str(hit.id), hit.score) for hit in qdrant_hits]
 
     def search(self, query: str, top_k: int = 5) -> List[RetrievalResult]:
         """
-        Perform hierarchical semantic search.
+        Perform hybrid hierarchical search (vector + BM25).
 
         Args:
             query: The user's search query.
@@ -68,33 +89,38 @@ class RetrievalService:
         Returns:
             List of RetrievalResult objects with full hierarchy context.
         """
-        # 1. Embed the query
-        query_vector = self.embedding_provider.embed([query])[0]
-        logger.info(f"Embedded query, searching Qdrant for top-{top_k} sections")
+        # 1. Dense vector search (always runs)
+        vector_results = self._vector_search(query, top_k=top_k * 2)
 
-        # 2. Search Qdrant for similar section vectors
-        qdrant_response = self.qdrant_client.query_points(
-            collection_name="sections",
-            query=query_vector,
-            limit=top_k,
-        )
+        # 2. Sparse BM25 search (if enabled)
+        bm25_results = []
+        if settings.BM25_ENABLED:
+            bm25_results = self.bm25_retriever.search(query, top_k=top_k * 2)
+            logger.info(f"BM25 returned {len(bm25_results)} results")
 
-        qdrant_hits = qdrant_response.points if qdrant_response else []
+        # 3. Fuse results via RRF
+        if bm25_results:
+            fused = rrf_fuse(
+                vector_results,
+                bm25_results,
+                weights=[settings.VECTOR_WEIGHT, settings.BM25_WEIGHT],
+            )
+        else:
+            # Fallback to vector-only ranking
+            fused = vector_results
 
-        if not qdrant_hits:
-            logger.info("No results found in Qdrant")
+        # Take top_k from fused list
+        fused_top = fused[:top_k]
+        if not fused_top:
+            logger.info("No results found from any retrieval signal")
             return []
 
-        # 3. Extract Section UUIDs from Qdrant results
-        hit_map = {}  # section_uuid_str -> score
-        for hit in qdrant_hits:
-            hit_map[str(hit.id)] = hit.score
-
-        section_ids = list(hit_map.keys())
-        logger.info(f"Qdrant returned {len(section_ids)} hits, fetching hierarchy from Postgres")
+        # Build score map from fused results
+        hit_map = {sid: score for sid, score in fused_top}
+        section_ids = [sid for sid, _ in fused_top]
+        logger.info(f"Fused retrieval produced {len(section_ids)} candidates, fetching hierarchy from Postgres")
 
         # 4. Fetch canonical hierarchy from PostgreSQL
-        # Join Section → Page → Document in a single query
         rows = (
             self.db.query(Section, Page, Document)
             .join(Page, Section.page_id == Page.id)
@@ -103,7 +129,7 @@ class RetrievalService:
             .all()
         )
 
-        # Build results, preserving Qdrant ranking order
+        # Build results, preserving fused ranking order
         results_map: Dict[str, RetrievalResult] = {}
         for section, page, document in rows:
             section_id_str = str(section.id)
@@ -118,16 +144,12 @@ class RetrievalService:
                 score=hit_map.get(section_id_str, 0.0),
             )
 
-        # Handle orphaned Qdrant IDs (exist in vector store but not in Postgres)
+        # Handle orphaned IDs
         for sid in section_ids:
             if sid not in results_map:
-                logger.warning(f"Section {sid} found in Qdrant but missing from Postgres — skipping")
+                logger.warning(f"Section {sid} found in retrieval but missing from Postgres — skipping")
 
-        # Return results in original Qdrant ranking order
-        ordered_results = []
-        for sid in section_ids:
-            if sid in results_map:
-                ordered_results.append(results_map[sid])
-
-        logger.info(f"Returning {len(ordered_results)} hierarchical results")
+        # Return in fused ranking order
+        ordered_results = [results_map[sid] for sid in section_ids if sid in results_map]
+        logger.info(f"Returning {len(ordered_results)} hierarchical results (hybrid retrieval)")
         return ordered_results
