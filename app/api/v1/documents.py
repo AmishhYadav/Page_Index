@@ -1,10 +1,6 @@
-from fastapi import APIRouter, UploadFile, File, Depends, HTTPException
-from sqlalchemy.orm import Session
-from app.db.session import get_db
-from app.schemas.document import IngestionResponse
-from app.services.pdf_processor import PDFProcessor
+from app.api.v1 import documents
+from app.services.ingestion import IngestionService
 import logging
-import uuid
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -25,18 +21,18 @@ async def upload_document(
     try:
         pdf_bytes = await file.read()
         processor = PDFProcessor()
-        # For Wave 2, we just parse it to verify the flow is working.
-        # Wave 3 will handle the actual database persistence logic.
-        results = processor.process_pdf(pdf_bytes)
+        pages_data = processor.process_pdf(pdf_bytes)
         
-        # Temporary UUID for Wave 2 response
-        doc_id = uuid.uuid4()
+        ingest_service = IngestionService(db)
+        db_doc = ingest_service.ingest_document(file.filename, pages_data)
         
         return IngestionResponse(
-            document_id=doc_id,
-            status="received",
-            message=f"Document '{file.filename}' processed successfully. Found {len(results)} pages."
+            document_id=db_doc.id,
+            status=db_doc.status,
+            message=f"Document '{file.filename}' processed and indexed successfully."
         )
     except Exception as e:
         logger.error(f"Error processing document {file.filename}: {str(e)}", exc_info=True)
+        if isinstance(e, HTTPException):
+            raise e
         raise HTTPException(status_code=500, detail="Error processing document.")
