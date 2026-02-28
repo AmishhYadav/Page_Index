@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import text
-from qdrant_client.http.models import Filter
+from qdrant_client.http.models import Filter, FieldCondition, MatchAny, Range
 from app.db.qdrant import get_qdrant_client
 from app.services.embeddings import get_embedding_provider
 from app.services.bm25_retriever import BM25Retriever
@@ -50,9 +50,9 @@ class RetrievalResult:
 
 class RetrievalService:
     """
-    Orchestrates hybrid hierarchical search:
-    1. Dense: Embed query → Qdrant similarity search → top-K Section UUIDs
-    2. Sparse: BM25 keyword search via PostgreSQL tsvector
+    Orchestrates hybrid hierarchical search with metadata filtering:
+    1. Dense: Embed query → Qdrant similarity search (with payload filters)
+    2. Sparse: BM25 keyword search via PostgreSQL tsvector (with WHERE filters)
     3. Fuse both signals via Reciprocal Rank Fusion (RRF)
     4. Fetch canonical Section → Page → Document hierarchy from PostgreSQL
     5. Return structured results with full metadata for citation
@@ -64,38 +64,62 @@ class RetrievalService:
         self.embedding_provider = get_embedding_provider()
         self.bm25_retriever = BM25Retriever(db)
 
-    def _vector_search(self, query: str, top_k: int) -> List[tuple]:
-        """Dense vector search via Qdrant."""
+    def _build_qdrant_filter(self, filters) -> Optional[Filter]:
+        """Build Qdrant payload filter from RetrievalFilters."""
+        if filters is None:
+            return None
+
+        conditions = []
+
+        if filters.document_ids:
+            doc_id_strs = [str(d) for d in filters.document_ids]
+            conditions.append(FieldCondition(key="document_id", match=MatchAny(any=doc_id_strs)))
+
+        if filters.page_range:
+            min_page, max_page = filters.page_range
+            conditions.append(FieldCondition(key="page_number", range=Range(gte=min_page, lte=max_page)))
+
+        if not conditions:
+            return None
+
+        return Filter(must=conditions)
+
+    def _vector_search(self, query: str, top_k: int, filters=None) -> List[tuple]:
+        """Dense vector search via Qdrant with optional payload filters."""
         query_vector = self.embedding_provider.embed([query])[0]
         logger.info(f"Embedded query, searching Qdrant for top-{top_k} sections")
+
+        qdrant_filter = self._build_qdrant_filter(filters)
 
         qdrant_response = self.qdrant_client.query_points(
             collection_name="sections",
             query=query_vector,
             limit=top_k,
+            query_filter=qdrant_filter,
         )
 
         qdrant_hits = qdrant_response.points if qdrant_response else []
         return [(str(hit.id), hit.score) for hit in qdrant_hits]
 
-    def search(self, query: str, top_k: int = 5) -> List[RetrievalResult]:
+    def search(self, query: str, top_k: int = 5, filters=None) -> List[RetrievalResult]:
         """
-        Perform hybrid hierarchical search (vector + BM25).
+        Perform hybrid hierarchical search (vector + BM25) with optional metadata filters.
 
         Args:
             query: The user's search query.
             top_k: Number of top results to return.
+            filters: Optional RetrievalFilters for scoped search.
 
         Returns:
             List of RetrievalResult objects with full hierarchy context.
         """
         # 1. Dense vector search (always runs)
-        vector_results = self._vector_search(query, top_k=top_k * 2)
+        vector_results = self._vector_search(query, top_k=top_k * 2, filters=filters)
 
         # 2. Sparse BM25 search (if enabled)
         bm25_results = []
         if settings.BM25_ENABLED:
-            bm25_results = self.bm25_retriever.search(query, top_k=top_k * 2)
+            bm25_results = self.bm25_retriever.search(query, top_k=top_k * 2, filters=filters)
             logger.info(f"BM25 returned {len(bm25_results)} results")
 
         # 3. Fuse results via RRF
@@ -106,7 +130,6 @@ class RetrievalService:
                 weights=[settings.VECTOR_WEIGHT, settings.BM25_WEIGHT],
             )
         else:
-            # Fallback to vector-only ranking
             fused = vector_results
 
         # Take top_k from fused list
@@ -115,19 +138,25 @@ class RetrievalService:
             logger.info("No results found from any retrieval signal")
             return []
 
-        # Build score map from fused results
         hit_map = {sid: score for sid, score in fused_top}
         section_ids = [sid for sid, _ in fused_top]
         logger.info(f"Fused retrieval produced {len(section_ids)} candidates, fetching hierarchy from Postgres")
 
         # 4. Fetch canonical hierarchy from PostgreSQL
-        rows = (
+        query_builder = (
             self.db.query(Section, Page, Document)
             .join(Page, Section.page_id == Page.id)
             .join(Document, Page.document_id == Document.id)
             .filter(Section.id.in_(section_ids))
-            .all()
         )
+
+        # Apply filename filter at the Postgres level for extra safety
+        if filters and filters.filename_contains:
+            query_builder = query_builder.filter(
+                Document.filename.ilike(f"%{filters.filename_contains}%")
+            )
+
+        rows = query_builder.all()
 
         # Build results, preserving fused ranking order
         results_map: Dict[str, RetrievalResult] = {}
@@ -149,7 +178,6 @@ class RetrievalService:
             if sid not in results_map:
                 logger.warning(f"Section {sid} found in retrieval but missing from Postgres — skipping")
 
-        # Return in fused ranking order
         ordered_results = [results_map[sid] for sid in section_ids if sid in results_map]
         logger.info(f"Returning {len(ordered_results)} hierarchical results (hybrid retrieval)")
         return ordered_results
