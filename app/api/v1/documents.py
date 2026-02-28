@@ -1,4 +1,8 @@
-from app.api.v1 import documents
+from fastapi import APIRouter, UploadFile, File, Depends, HTTPException
+from sqlalchemy.orm import Session
+from app.db.session import get_db
+from app.schemas.document import IngestionResponse
+from app.services.pdf_processor import PDFProcessor
 from app.services.ingestion import IngestionService
 import logging
 
