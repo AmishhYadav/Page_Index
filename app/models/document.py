@@ -1,14 +1,18 @@
 import uuid
-from sqlalchemy import Column, Integer, String, Text, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, Integer, String, Text, ForeignKey, UniqueConstraint, DateTime
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
 from app.models.base import Base
 
 class Document(Base):
     __tablename__ = "documents"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
-    # Add other metadata fields here later as needed (e.g., source file name, hash)
+    filename = Column(String, nullable=False)
+    status = Column(String, nullable=False, default="processing")
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now(), server_default=func.now())
 
     pages = relationship("Page", back_populates="document", cascade="all, delete-orphan", passive_deletes=True)
 
@@ -32,6 +36,7 @@ class Section(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
     page_id = Column(UUID(as_uuid=True), ForeignKey("pages.id", ondelete="CASCADE"), nullable=False, index=True)
     section_index = Column(Integer, nullable=False)
+    title = Column(String, nullable=True)
     content = Column(Text, nullable=False)
 
     page = relationship("Page", back_populates="sections")
