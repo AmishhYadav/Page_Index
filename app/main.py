@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from app.core.logger import setup_logger, request_id_ctx_var
 from app.api.v1 import documents
+from app.api.v1 import ask
 
 # Configure JSON logging for startup
 setup_logger()
@@ -52,6 +53,7 @@ async def log_request_middleware(request: Request, call_next):
         raise
 
 app.include_router(documents.router, prefix="/api/v1/documents", tags=["documents"])
+app.include_router(ask.router, prefix="/api/v1/ask", tags=["ask"])
 
 @app.get("/api/v1/health")
 async def health_check():
