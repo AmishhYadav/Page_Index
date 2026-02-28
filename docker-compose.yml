@@ -1,0 +1,55 @@
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pageindex_api
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - qdrant
+    networks:
+      - pageindex_net
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: pageindex_postgres
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: pageindex
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - pageindex_net
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U user -d pageindex" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: pageindex_qdrant
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    networks:
+      - pageindex_net
+
+volumes:
+  postgres_data:
+  qdrant_data:
+
+
+networks:
+  pageindex_net:
+    driver: bridge
