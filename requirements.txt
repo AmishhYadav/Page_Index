@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+pydantic-settings
+sqlalchemy
+alembic
+qdrant-client
+psycopg2-binary
+python-json-logger
