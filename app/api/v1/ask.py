@@ -5,6 +5,7 @@ from app.schemas.ask import AskRequest, AskResponse, Citation
 from app.services.retrieval import RetrievalService
 from app.services.reranker import ReRanker
 from app.services.llm import LLMService
+from app.services.citation_validator import CitationValidator
 import logging
 import time
 
@@ -19,7 +20,7 @@ async def ask_question(
 ):
     """
     Ask a question against the indexed document corpus.
-    Pipeline: Hybrid Retrieval → Re-Ranking → LLM Generation → Response
+    Pipeline: Hybrid Retrieval → Re-Ranking → Context Packing → LLM Generation → Citation Validation → Response
     """
     logger.info(f"Received question: '{request.query}' (top_k={request.top_k}, filters={request.filters})")
 
@@ -37,20 +38,29 @@ async def ask_question(
     rerank_time = time.time() - rerank_start
     logger.info(f"Re-ranking completed in {rerank_time:.3f}s")
 
-    # 3. Generate answer with citations
+    # 3. Generate answer with citations (includes context packing)
     generation_start = time.time()
     llm_service = LLMService()
     llm_output = llm_service.generate_answer(request.query, results)
     generation_time = time.time() - generation_start
     logger.info(f"LLM generation completed in {generation_time:.3f}s")
 
-    # 4. Build response
+    # 4. Build citation list
     citations = [
         Citation(**c) for c in llm_output["citations"]
     ]
 
+    # 5. Validate citations in the answer
+    validator = CitationValidator()
+    validation = validator.validate(
+        answer=llm_output["answer"],
+        context_sources=[c.dict() for c in citations] if citations else [],
+    )
+
     return AskResponse(
         answer=llm_output["answer"],
         citations=citations,
+        citation_integrity=validation["citation_integrity"],
+        unverified_citations=validation["unverified_citations"],
     )
 

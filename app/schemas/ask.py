@@ -26,4 +26,6 @@ class Citation(BaseModel):
 class AskResponse(BaseModel):
     answer: str
     citations: List[Citation] = []
+    citation_integrity: Optional[float] = None
+    unverified_citations: List[str] = []
 

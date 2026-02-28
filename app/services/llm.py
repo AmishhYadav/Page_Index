@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import List, Dict, Any, Optional
 from app.core.config import settings
 from app.services.retrieval import RetrievalResult
+from app.services.context_packer import ContextPacker
 import logging
 import json
 
@@ -108,10 +109,15 @@ class LLMService:
                 "citations": [],
             }
 
-        context_text = format_context(results)
+        # Pack context within token budget
+        packer = ContextPacker()
+        packed_results, pack_meta = packer.pack(results)
+        logger.info(f"Context packing: {pack_meta}")
+
+        context_text = format_context(packed_results)
         user_prompt = f"Context:\n{context_text}\n\nQuestion: {query}"
 
-        logger.info(f"Generating answer with {len(results)} context sections")
+        logger.info(f"Generating answer with {len(packed_results)} context sections (packed from {len(results)})")
 
         try:
             answer = self.provider.generate(CITATION_SYSTEM_PROMPT, user_prompt)
