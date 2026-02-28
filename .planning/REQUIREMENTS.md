@@ -30,8 +30,8 @@
 
 - [x] **API-01**: System exposes REST APIs for all core actions (upload, search, ask) via FastAPI.
 - [x] **INF-01**: System is fully containerized with Docker/Docker Compose.
-- [ ] **INF-02**: Embedding model is configurable (no hardcoded dimensionality) and supports graceful swapping of providers.
-- [ ] **INF-03**: System implements observability logging (ingestion errors, embedding failures, retrieval latency).
+- [x] **INF-02**: Embedding model is configurable (no hardcoded dimensionality) and supports graceful swapping of providers.
+- [x] **INF-03**: System implements observability logging (ingestion errors, embedding failures, retrieval latency).
 - [x] **INF-04**: System configuration is centralized using environment variables and typed with Pydantic Settings.
 
 ## Out of Scope
@@ -60,8 +60,8 @@
 | QNA-02 | Phase 3 | Pending |
 | API-01 | Phase 1 | Complete |
 | INF-01 | Phase 1 | Complete |
-| INF-02 | Phase 1 | Pending |
-| INF-03 | Phase 1 | Pending |
+| INF-02 | Phase 1 | Complete |
+| INF-03 | Phase 1 | Complete |
 | INF-04 | Phase 1 | Complete |
 
 **Coverage:**
