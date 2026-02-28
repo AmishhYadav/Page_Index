@@ -15,7 +15,7 @@
 - [ ] **IDX-01**: System generates vector embeddings for each logical section.
 - [ ] **IDX-02**: System stores embeddings in Qdrant with attached metadata (doc_id, page_num, section_id).
 - [ ] **IDX-03**: System stores hard hierarchical metadata and document state in PostgreSQL.
-- [ ] **IDX-04**: System enforces strict hierarchy invariants: Section belongs to exactly one Page, Page belongs to exactly one Document; cascading deletes applied.
+- [x] **IDX-04**: System enforces strict hierarchy invariants: Section belongs to exactly one Page, Page belongs to exactly one Document; cascading deletes applied.
 - [ ] **IDX-05**: Section embeddings must be uniquely linked to their Section primary key.
 
 ### Retrieval & Generation
@@ -51,7 +51,7 @@
 | IDX-01 | Phase 2 | Pending |
 | IDX-02 | Phase 2 | Pending |
 | IDX-03 | Phase 2 | Pending |
-| IDX-04 | Phase 1 | Pending |
+| IDX-04 | Phase 1 | Complete |
 | IDX-05 | Phase 2 | Pending |
 | RTRV-01 | Phase 3 | Pending |
 | RTRV-02 | Phase 3 | Pending |
