@@ -185,7 +185,7 @@ Tweak the parameters of the intelligence suite via standard environment variable
 
 ---
 
-## 📂 Project Tree
+## � Project Tree
 
 ```text
 ├── app/
@@ -209,6 +209,72 @@ Tweak the parameters of the intelligence suite via standard environment variable
 └── scripts/            # Environment & Qdrant setup scripts
 ```
 
+---
+
+## 🏛️ Design Philosophy
+
+### The "Hierarchy First" Mandate
+Most RAG systems treat documents as a flat bag of chunks. PageIndex KnowledgeOS is built on the premise that **structure is signal**. By preserving the `Document → Page → Section` hierarchy, we:
+1.  **Eliminate Context Fragmentation**: We know which sections belong to the same page, allowing for better deduplication and grouping.
+2.  **Enable Page-Level Grounding**: Citations are not just "Chunk 42"; they are "Page 12 of the Annual Report," making them human-verifiable.
+3.  **Optimize Retrieval Precision**: Hybrid search (BM25 + Semantic) ensures we catch both nuanced meanings and exact technical jargon.
+
+---
+
+## �🔍 Deep Dive: The Intelligence Pipeline
+
+PageIndex KnowledgeOS goes beyond standard "Top-K" retrieval by implementing a multi-stage refinement pipeline:
+
+1.  **Hybrid Step**: We resolve the user query through two parallel lenses:
+    *   **Qdrant**: Captures semantic intent and synonyms (e.g., "fiscal year" matches "FY").
+    *   **Postgres TSVector**: Captures exact technical terms, acronyms, and proper nouns that embeddings sometimes "blur."
+2.  **Fusion**: We use **Reciprocal Rank Fusion (RRF)** to merge these lists. RRF is scale-agnostic, meaning it doesn't care if Qdrant scores are 0.9 and Postgres scores are 54.2—it only cares about their relative *rank*.
+3.  **Re-Ranking (Optional)**: If enabled, we send the top 20 candidates to a **Cross-Encoder**. Unlike "Bi-Encoders" (used for indexing), a Cross-Encoder performs full self-attention over the query and document simultaneously, providing a much more accurate "relevance" score at the cost of higher latency.
+4.  **Context Packing**: We calculate the token footprint of each section and pack the LLM prompt until the `CONTEXT_TOKEN_BUDGET` is hit. We prioritize high-score unique pages to give the LLM a broader "view" of the document.
+5.  **Deterministic Audit**: After the LLM responds, we parse out all citations. We cross-reference them against the internal IDs of the sections actually provided in the prompt. If the LLM "hallucinates" a citation from a page it wasn't shown, the `citation_integrity` score drops, allowing for automated flagging of untrustworthy answers.
+
+---
+
+## 🧪 Testing & Quality Assurance
+
+PageIndex includes a comprehensive suite of unit and integration tests covering the retrieval and logic layers.
+
+### Running Suite
+```bash
+# Ensure you are in the virtual environment
+source .venv/bin/activate
+
+# Run all tests with diagnostic output
+python -m pytest tests/ -v
+```
+
+### Key Test Vectors
+- **`test_04_01`**: Validates RRF fusion logic and weighted ranking.
+- **`test_04_04_05`**: Validates context window packing (token limits, page dedup) and citation validation (hallucination detection).
+- **`test_flow`**: End-to-end multi-page PDF ingestion and query flow.
+
+---
+
+## 📈 Roadmap & Future Work
+
+- [ ] **Streaming Support**: Real-time token streaming for the `/ask` endpoint.
+- [ ] **Multi-Modal Ingestion**: OCR support for scanned PDFs and image-heavy documents.
+- [ ] **Agentic Corrective RAG (CRAG)**: Using a secondary "critic" agent to evaluate retrieved context relevance.
+- [ ] **Asynchronous Task Queue**: Moving ingestion to Celery/Redis for large batch processing.
+
+---
+
 ## 📜 License
 
-This project is licensed under the MIT License.
+Distributed under the **MIT License**. See `LICENSE` for more information.
+
+---
+
+## 👥 Contributing
+
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
