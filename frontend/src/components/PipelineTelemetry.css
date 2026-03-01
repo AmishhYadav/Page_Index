@@ -1,0 +1,65 @@
+.pipeline-telemetry {
+    background-color: var(--panel-gray);
+    border: 1px solid var(--border-slate);
+    border-radius: var(--radius);
+    padding: 0.75rem 1rem;
+    margin-bottom: 2rem;
+}
+
+.telemetry-header {
+    margin-bottom: 0.75rem;
+}
+
+.telemetry-title {
+    font-size: 0.625rem;
+    font-family: var(--font-mono);
+    color: var(--text-secondary);
+    letter-spacing: 0.05em;
+}
+
+.stages-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.stage-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    opacity: 0.4;
+    transition: all 0.3s ease;
+}
+
+.stage-item.active {
+    opacity: 1;
+    color: var(--accent-blue);
+}
+
+.stage-item.completed {
+    opacity: 1;
+    color: var(--text-primary);
+}
+
+.stage-icon-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.stage-label {
+    font-size: 0.625rem;
+    font-family: var(--font-mono);
+    font-weight: 500;
+}
+
+.stage-divider {
+    flex: 0.5;
+    height: 1px;
+    background-color: var(--border-slate);
+    margin: 0 0.5rem;
+}
+
+.emerald {
+    color: #2ead42;
+}

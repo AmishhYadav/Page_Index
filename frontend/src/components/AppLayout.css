@@ -1,0 +1,141 @@
+.app-layout {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+    background-color: var(--bg-graphite);
+}
+
+.sidebar {
+    width: var(--sidebar-width);
+    background-color: var(--bg-graphite);
+    border-right: 1px solid var(--border-slate);
+    display: flex;
+    flex-direction: column;
+    padding: 1rem 0;
+    z-index: 10;
+}
+
+.sidebar-header {
+    padding: 0 1.25rem 2rem 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.logo-icon {
+    color: var(--accent-blue);
+}
+
+.logo-text {
+    font-weight: 600;
+    font-size: 0.875rem;
+    letter-spacing: 0.1em;
+    color: var(--text-primary);
+}
+
+.nav-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0 0.75rem;
+}
+
+.nav-item {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.625rem 0.75rem;
+    border-radius: var(--radius);
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    text-align: left;
+}
+
+.nav-item:hover {
+    color: var(--text-primary);
+    background-color: var(--panel-gray);
+}
+
+.nav-item.active {
+    color: var(--text-primary);
+    background-color: var(--panel-gray);
+    box-shadow: inset 2px 0 0 0 var(--accent-blue);
+}
+
+.sidebar-footer {
+    padding: 1rem 0.75rem 0 0.75rem;
+    border-top: 1px solid var(--border-slate);
+}
+
+.workspace {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.header {
+    height: var(--header-height);
+    border-bottom: 1px solid var(--border-slate);
+    display: flex;
+    align-items: center;
+    padding: 0 1.5rem;
+    gap: 1.5rem;
+    background-color: var(--bg-graphite);
+}
+
+.telemetry-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+.telemetry-label {
+    font-size: 0.625rem;
+    font-family: var(--font-mono);
+    color: var(--text-secondary);
+}
+
+.telemetry-value {
+    font-size: 0.75rem;
+    font-family: var(--font-mono);
+    font-weight: 500;
+}
+
+.telemetry-value.emerald {
+    color: #2ead42;
+}
+
+.telemetry-divider {
+    width: 1px;
+    height: 20px;
+    background-color: var(--border-slate);
+}
+
+.header-spacer {
+    flex: 1;
+}
+
+.status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.625rem;
+    font-family: var(--font-mono);
+    color: var(--text-secondary);
+}
+
+.status-icon {
+    color: #2ead42;
+}
+
+.content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.5rem;
+    position: relative;
+}

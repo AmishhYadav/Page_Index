@@ -1,0 +1,140 @@
+.answer-panel {
+    width: 100%;
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.integrity-banner {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background-color: var(--panel-gray);
+    border-left: 2px solid #2ead42;
+    border-radius: 2px;
+    margin-bottom: 1.5rem;
+}
+
+.integrity-label {
+    font-size: 0.625rem;
+    font-family: var(--font-mono);
+    color: var(--text-secondary);
+}
+
+.integrity-value {
+    font-size: 0.625rem;
+    font-family: var(--font-mono);
+    font-weight: 600;
+}
+
+.emerald {
+    color: #2ead42;
+}
+
+.amber {
+    color: #d39e00;
+}
+
+.answer-content {
+    margin-bottom: 2rem;
+    line-height: 1.6;
+}
+
+.answer-text {
+    font-size: 0.9375rem;
+    color: var(--text-primary);
+}
+
+.citations-header {
+    margin-bottom: 1rem;
+    border-bottom: 1px solid var(--border-slate);
+    padding-bottom: 0.5rem;
+}
+
+.citations-label {
+    font-size: 0.625rem;
+    font-family: var(--font-mono);
+    color: var(--text-secondary);
+    letter-spacing: 0.05em;
+}
+
+.citations-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.citation-card {
+    background-color: var(--panel-gray);
+    border: 1px solid var(--border-slate);
+    border-radius: var(--radius);
+    padding: 0.75rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.citation-card:hover {
+    border-color: var(--text-secondary);
+    background-color: #232527;
+}
+
+.citation-icon {
+    color: var(--text-secondary);
+}
+
+.citation-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+.citation-filename {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.citation-meta {
+    font-size: 0.625rem;
+    font-family: var(--font-mono);
+    color: var(--text-secondary);
+}
+
+.citation-score {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+.score-label {
+    font-size: 0.5rem;
+    font-family: var(--font-mono);
+    color: var(--text-secondary);
+}
+
+.score-value {
+    font-size: 0.75rem;
+    font-family: var(--font-mono);
+    font-weight: 500;
+    color: var(--accent-blue);
+}
+
+.citation-arrow {
+    color: var(--border-slate);
+}

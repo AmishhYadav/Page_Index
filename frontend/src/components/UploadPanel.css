@@ -1,0 +1,143 @@
+.upload-panel {
+    max-width: 800px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.dropzone {
+    background-color: var(--panel-gray);
+    border: 1px dashed var(--border-slate);
+    border-radius: var(--radius);
+    padding: 3rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    transition: border-color 0.2s ease;
+}
+
+.dropzone:hover {
+    border-color: var(--accent-blue);
+}
+
+.upload-icon {
+    color: var(--border-slate);
+}
+
+.dropzone-text {
+    font-size: 0.75rem;
+    font-family: var(--font-mono);
+    color: var(--text-secondary);
+}
+
+.browse-btn {
+    background-color: var(--bg-graphite);
+    border: 1px solid var(--border-slate);
+    padding: 0.625rem 1.25rem;
+    border-radius: var(--radius);
+    font-size: 0.625rem;
+    font-family: var(--font-mono);
+    font-weight: 500;
+    color: var(--text-primary);
+    transition: all 0.2s ease;
+}
+
+.browse-btn:hover {
+    background-color: var(--panel-gray);
+    border-color: var(--text-secondary);
+}
+
+.queue-header {
+    font-size: 0.625rem;
+    font-family: var(--font-mono);
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+    border-bottom: 1px solid var(--border-slate);
+    padding-bottom: 0.5rem;
+}
+
+.queue-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.queue-item {
+    background-color: var(--panel-gray);
+    border: 1px solid var(--border-slate);
+    border-radius: var(--radius);
+    padding: 0.75rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.file-icon {
+    color: var(--text-secondary);
+}
+
+.file-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.file-name {
+    font-size: 0.8125rem;
+    font-weight: 500;
+}
+
+.progress-container {
+    height: 4px;
+    background-color: var(--bg-graphite);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    background-color: var(--accent-blue);
+    transition: width 0.3s ease;
+}
+
+.file-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.status-label {
+    font-size: 0.5rem;
+    font-family: var(--font-mono);
+    color: var(--text-secondary);
+}
+
+.emerald {
+    color: #2ead42;
+}
+
+.blue {
+    color: var(--accent-blue);
+}
+
+.amber {
+    color: #d39e00;
+}
+
+.spin {
+    animation: spin 1.5s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
