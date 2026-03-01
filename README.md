@@ -264,7 +264,32 @@ python -m pytest tests/ -v
 
 ---
 
-## 📜 License
+## �️ Maintenance & Troubleshooting
+
+### Docker Networking Issues
+If the API container cannot reach PostgreSQL or Qdrant:
+```bash
+docker compose down -v  # Clear volumes
+docker compose up -d    # Re-provision
+```
+
+### LLM Authentication
+Ensure your `LLM_API_KEY` is valid and has sufficient quota. The system will log `401 Unauthorized` or `429 Too Many Requests` in the structured application logs if the provider rejects the key.
+
+### Cross-Encoder Performance
+The re-ranker is CPU-intensive. If enabled on low-resource machines, the `/ask` latency may spike. Monitor the `Re-ranking completed in X.XXs` log messages to tune your `top_k` appropriately.
+
+---
+
+## 🚦 Project Status
+
+- **Phase 1-3**: Core Hybrid RAG Infrastructure (100% Complete)
+- **Phase 4**: Retrieval Intelligence Upgrade (100% Complete)
+- **Current Milestone**: `v1.1-alpha` — Stable for developer experimentation.
+
+---
+
+## �📜 License
 
 Distributed under the **MIT License**. See `LICENSE` for more information.
 
