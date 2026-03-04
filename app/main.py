@@ -3,6 +3,7 @@ import uuid
 import time
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from app.core.logger import setup_logger, request_id_ctx_var
 from app.api.v1 import documents
 from app.api.v1 import ask
@@ -24,6 +25,14 @@ app = FastAPI(
     description="Enterprise-grade hierarchical RAG system API",
     version="1.0.0",
     lifespan=lifespan
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 @app.middleware("http")
