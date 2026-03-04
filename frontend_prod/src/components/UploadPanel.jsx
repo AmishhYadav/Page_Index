@@ -1,49 +1,76 @@
-import React, { useState } from 'react';
-import { Upload, File, X, CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { Upload, File as FileIcon, X, CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
 import './UploadPanel.css';
 
 const UploadPanel = () => {
     const [files, setFiles] = useState([
         { name: 'Strat_Final.pdf', status: 'completed', progress: 100 },
         { name: 'Infra_Ops.pdf', status: 'completed', progress: 100 },
-        { name: 'Q1_Forecast_Draft.pdf', status: 'processing', progress: 45 },
-        { name: 'Internal_Audit.xlsx', status: 'error', progress: 0, error: 'FILE_TYPE_NOT_SUPPORTED' },
     ]);
+    const fileInputRef = useRef(null);
 
-    const handleBrowse = () => {
+    const handleFileUpload = async (e) => {
+        const selectedFile = e.target.files[0];
+        if (!selectedFile) return;
+
         const newFile = {
-            name: `Research_Doc_${Math.floor(Math.random() * 1000)}.pdf`,
+            name: selectedFile.name,
             status: 'processing',
             progress: 0
         };
 
         setFiles(prev => [newFile, ...prev]);
 
-        // Simulate upload progress
-        let progress = 0;
-        const interval = setInterval(() => {
-            progress += 10;
-            setFiles(prev => prev.map(f =>
-                f.name === newFile.name ? { ...f, progress } : f
-            ));
+        // Real API Call
+        const formData = new FormData();
+        formData.append('file', selectedFile);
 
-            if (progress >= 100) {
-                clearInterval(interval);
-                setTimeout(() => {
-                    setFiles(prev => prev.map(f =>
-                        f.name === newFile.name ? { ...f, status: 'completed' } : f
-                    ));
-                }, 500);
-            }
-        }, 300);
+        try {
+            // Simulated progress because XHR is needed for real progress, 
+            // but we'll use a fetch for simplicity with the backend contract.
+            const response = await fetch('/api/v1/documents/', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) throw new Error('UPLOAD_FAILED');
+
+            setFiles(prev => prev.map(f =>
+                f.name === selectedFile.name ? { ...f, status: 'completed', progress: 100 } : f
+            ));
+        } catch (error) {
+            console.error("Upload Error:", error);
+            setFiles(prev => prev.map(f =>
+                f.name === selectedFile.name ? { ...f, status: 'error', error: 'SYSTEM_ERROR' } : f
+            ));
+        }
     };
 
     return (
         <div className="upload-panel">
-            <div className="dropzone">
+            <input
+                type="file"
+                ref={fileInputRef}
+                style={{ display: 'none' }}
+                accept=".pdf"
+                onChange={handleFileUpload}
+            />
+            <div
+                className="dropzone"
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                    e.preventDefault();
+                    handleFileUpload({ target: { files: e.dataTransfer.files } });
+                }}
+            >
                 <Upload size={32} className="upload-icon" />
                 <p className="dropzone-text">DRAG_AND_DROP_PDF_FOR_CASCADE_INDEXING</p>
-                <button className="browse-btn" onClick={handleBrowse}>BROWSE_LOCAL_FILES</button>
+                <button
+                    className="browse-btn"
+                    onClick={() => fileInputRef.current.click()}
+                >
+                    BROWSE_LOCAL_FILES
+                </button>
             </div>
 
             <div className="ingestion-queue">
@@ -51,12 +78,12 @@ const UploadPanel = () => {
                 <div className="queue-list">
                     {files.map((file, idx) => (
                         <div key={idx} className={`queue-item ${file.status}`}>
-                            <File size={16} className="file-icon" />
+                            <FileIcon size={16} className="file-icon" />
                             <div className="file-info">
                                 <span className="file-name">{file.name}</span>
                                 {file.status === 'processing' && (
                                     <div className="progress-container">
-                                        <div className="progress-bar" style={{ width: `${file.progress}%` }}></div>
+                                        <div className="progress-bar progress-spin"></div>
                                     </div>
                                 )}
                             </div>

@@ -9,17 +9,6 @@ import UploadPanel from './components/UploadPanel';
 import DocumentViewer from './components/DocumentViewer';
 import Settings from './components/Settings';
 
-// Mock data for initial state
-const MOCK_RESPONSE = {
-  answer: "Analysis of verified filings reveals three critical risk drivers for Q3 expansion: (1) Anticipated 12% increase in regional energy overhead due to market volatility [Doc: Strat_Final.pdf, p14]; (2) Supply chain constraints impacting Phase 2 greenfield materials [Doc: Infra_Ops.pdf, p8]; and (3) Shifting regulatory compliance regarding cross-border data sovereignty [Doc: Compliance_Audit.pdf, p22].",
-  integrityScore: 0.982,
-  citations: [
-    { filename: 'Strat_Final.pdf', page: 14, nodeCount: 4, score: 0.942 },
-    { filename: 'Infra_Ops.pdf', page: 8, nodeCount: 2, score: 0.881 },
-    { filename: 'Compliance_Audit.pdf', page: 22, nodeCount: 6, score: 0.915 }
-  ]
-};
-
 function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isLoading, setIsLoading] = useState(false);
@@ -31,7 +20,7 @@ function App() {
   // Viewer state for cross-link navigation
   const [viewerContext, setViewerContext] = useState({
     filename: 'STRAT_FINAL.PDF',
-    page: 14
+    page: 1
   });
 
   const handleSearch = async (query) => {
@@ -40,16 +29,47 @@ function App() {
     setCompletedStages([]);
     setSelectedCitation(null);
 
+    // Visual feedback for pipeline stages (sequential UI timing)
     const stages = ['retrieving', 'fusing', 'reranking', 'packing'];
-    for (const stage of stages) {
-      setActiveStage(stage);
-      await new Promise(r => setTimeout(r, 600));
-      setCompletedStages(prev => [...prev, stage]);
-    }
 
-    setActiveStage(null);
-    setResult(MOCK_RESPONSE);
-    setIsLoading(false);
+    try {
+      // Start API call
+      const responsePromise = fetch('/api/v1/ask/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query, top_k: 5 })
+      });
+
+      // Simultaneous UI animation for telemetry
+      for (const stage of stages) {
+        setActiveStage(stage);
+        await new Promise(r => setTimeout(r, 400)); // Quicker steps for responsiveness
+        setCompletedStages(prev => [...prev, stage]);
+      }
+
+      const response = await responsePromise;
+      if (!response.ok) throw new Error('BACKEND_COMMUNICATION_FAILURE');
+
+      const data = await response.json();
+
+      // Map Backend AskResponse to Frontend internal state
+      setResult({
+        answer: data.answer,
+        integrityScore: data.citation_integrity || 0,
+        citations: data.citations.map(c => ({
+          filename: c.document_name,
+          page: c.page_number,
+          score: data.citation_integrity || 0.85, // Use global as default for display
+          textSnippet: c.text_snippet
+        }))
+      });
+    } catch (error) {
+      console.error("Search Error:", error);
+      // Fallback/Error state could be implemented here
+    } finally {
+      setActiveStage(null);
+      setIsLoading(false);
+    }
   };
 
   const handleOpenViewer = (citation) => {

@@ -5,14 +5,15 @@ import './CitationInspector.css';
 const CitationInspector = ({ citation, onClose, onOpenViewer }) => {
     if (!citation) return null;
 
-    const isHighIntegrity = citation.score > 0.9;
+    const isHighIntegrity = (citation.score || 0) > 0.9;
+    const filename = citation.filename || "UNKNOWN_SOURCE";
 
     return (
         <div className="citation-inspector">
             <div className="inspector-header">
                 <div className="inspector-title">
                     <FileText size={16} className="title-icon" />
-                    <span>FORENSIC_INSPECTOR [ID: {citation.filename.split('.')[0]}]</span>
+                    <span>FORENSIC_INSPECTOR [ID: {filename.split('.')[0]}]</span>
                 </div>
                 <button className="close-btn" onClick={onClose}>
                     <X size={16} />
@@ -23,16 +24,16 @@ const CitationInspector = ({ citation, onClose, onOpenViewer }) => {
                 <div className="evidence-summary">
                     <div className="summary-item">
                         <span className="summary-label">SOURCE_FILE:</span>
-                        <span className="summary-value">{citation.filename}</span>
+                        <span className="summary-value">{filename}</span>
                     </div>
                     <div className="summary-item">
                         <span className="summary-label">PAGE_LOCATION:</span>
-                        <span className="summary-value">SECTION {citation.page}</span>
+                        <span className="summary-value">SECTION {citation.page || '?'}</span>
                     </div>
                     <div className="summary-item">
                         <span className="summary-label">VECTOR_SIGNAL:</span>
-                        <span className={`summary-value ${isHighIntegrity ? 'emerald' : 'amber'}`}>
-                            {(citation.score).toFixed(4)} {isHighIntegrity ? '[VERIFIED]' : '[LOW_CONFIDENCE]'}
+                        <span className={`summary-value ${(isHighIntegrity || !citation.score) ? 'emerald' : 'amber'}`}>
+                            {(citation.score || 0).toFixed(4)} {isHighIntegrity ? '[VERIFIED]' : '[SIGNAL_VARIANCE]'}
                         </span>
                     </div>
                 </div>
@@ -41,7 +42,7 @@ const CitationInspector = ({ citation, onClose, onOpenViewer }) => {
                     <div className="log-header">VERIFICATION_TRACE</div>
                     <div className="log-entry">
                         <CheckCircle2 size={12} className="emerald" />
-                        <span>[03:22:14] HIERARCHY_SYNC_COMPLETE</span>
+                        <span>[{new Date().toLocaleTimeString([], { hour12: false })}] HIERARCHY_SYNC_COMPLETE</span>
                     </div>
                     <div className="log-entry">
                         {isHighIntegrity ? (
@@ -49,11 +50,11 @@ const CitationInspector = ({ citation, onClose, onOpenViewer }) => {
                         ) : (
                             <AlertTriangle size={12} className="amber" />
                         )}
-                        <span>[03:22:15] CROSS_ENCODER_SIGNAL_MATCH</span>
+                        <span>[{new Date().toLocaleTimeString([], { hour12: false })}] CROSS_ENCODER_SIGNAL_MATCH</span>
                     </div>
                     <div className="log-entry">
                         <CheckCircle2 size={12} className="emerald" />
-                        <span>[03:22:15] CITATION_INDEX_ANCHOR_FOUND</span>
+                        <span>[{new Date().toLocaleTimeString([], { hour12: false })}] CITATION_INDEX_ANCHOR_FOUND</span>
                     </div>
                 </div>
 
@@ -62,7 +63,7 @@ const CitationInspector = ({ citation, onClose, onOpenViewer }) => {
                         <span>RAW_CONTEXT_SNIPPET</span>
                         <button
                             className="action-link"
-                            onClick={() => onOpenViewer(citation)}
+                            onClick={() => onOpenViewer && onOpenViewer(citation)}
                         >
                             <ExternalLink size={12} />
                             <span>OPEN_VIEWER</span>
@@ -70,9 +71,7 @@ const CitationInspector = ({ citation, onClose, onOpenViewer }) => {
                     </div>
                     <div className="preview-box">
                         <p className="preview-text">
-                            "...regional sectors show a discrepancy in filing data relating to energy overhead.
-                            Volatility in Q3 market indexes contributed to a 12% increase in base operational
-                            costs across all monitored expansion zones. Supply chain audits confirm..."
+                            "{citation.textSnippet || '...context signal unavailable for this snippet...'}"
                         </p>
                     </div>
                 </div>

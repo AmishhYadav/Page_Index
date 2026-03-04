@@ -2,7 +2,7 @@ import React from 'react';
 import { ShieldCheck, FileText, ChevronRight } from 'lucide-react';
 import './AnswerPanel.css';
 
-const AnswerPanel = ({ answer, citations, integrityScore, onSelectCitation }) => {
+const AnswerPanel = ({ answer, citations = [], integrityScore = 0, onSelectCitation }) => {
     if (!answer) return null;
 
     return (
@@ -30,18 +30,18 @@ const AnswerPanel = ({ answer, citations, integrityScore, onSelectCitation }) =>
                     <div
                         key={idx}
                         className="citation-card"
-                        onClick={() => onSelectCitation(cite)}
+                        onClick={() => onSelectCitation && onSelectCitation(cite)}
                     >
                         <div className="citation-icon">
                             <FileText size={14} />
                         </div>
                         <div className="citation-info">
-                            <span className="citation-filename">{cite.filename}</span>
-                            <span className="citation-meta">PAGE {cite.page} | NODES {cite.nodeCount}</span>
+                            <span className="citation-filename">{cite.filename || 'UNKNOWN_FILE'}</span>
+                            <span className="citation-meta">PAGE {cite.page || '?'} | NODES {cite.nodeCount || 0}</span>
                         </div>
                         <div className="citation-score">
                             <span className="score-label">RELEVANCE</span>
-                            <span className="score-value">{(cite.score).toFixed(3)}</span>
+                            <span className="score-value">{(cite.score || 0).toFixed(3)}</span>
                         </div>
                         <ChevronRight size={14} className="citation-arrow" />
                     </div>
