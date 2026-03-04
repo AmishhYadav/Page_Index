@@ -9,16 +9,7 @@ import UploadPanel from './components/UploadPanel';
 import DocumentViewer from './components/DocumentViewer';
 import Settings from './components/Settings';
 
-// Mock data for initial state
-const MOCK_RESPONSE = {
-  answer: "Analysis of verified filings reveals three critical risk drivers for Q3 expansion: (1) Anticipated 12% increase in regional energy overhead due to market volatility [Doc: Strat_Final.pdf, p14]; (2) Supply chain constraints impacting Phase 2 greenfield materials [Doc: Infra_Ops.pdf, p8]; and (3) Shifting regulatory compliance regarding cross-border data sovereignty [Doc: Compliance_Audit.pdf, p22].",
-  integrityScore: 0.982,
-  citations: [
-    { filename: 'Strat_Final.pdf', page: 14, nodeCount: 4, score: 0.942 },
-    { filename: 'Infra_Ops.pdf', page: 8, nodeCount: 2, score: 0.881 },
-    { filename: 'Compliance_Audit.pdf', page: 22, nodeCount: 6, score: 0.915 }
-  ]
-};
+
 
 function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -26,30 +17,82 @@ function App() {
   const [activeStage, setActiveStage] = useState(null);
   const [completedStages, setCompletedStages] = useState([]);
   const [result, setResult] = useState(null);
+  const [searchError, setSearchError] = useState('');
   const [selectedCitation, setSelectedCitation] = useState(null);
+
+  // Document viewer navigation state (from citations)
+  const [viewerFilename, setViewerFilename] = useState('STRAT_FINAL.PDF');
+  const [viewerPage, setViewerPage] = useState(14);
 
   const handleSearch = async (query) => {
     setIsLoading(true);
     setResult(null);
+    setSearchError('');
     setCompletedStages([]);
     setSelectedCitation(null);
 
+    // Animate pipeline stages while API call executes
     const stages = ['retrieving', 'fusing', 'reranking', 'packing'];
-    for (const stage of stages) {
-      setActiveStage(stage);
-      await new Promise(r => setTimeout(r, 600));
-      setCompletedStages(prev => [...prev, stage]);
-    }
+    const stagePromise = (async () => {
+      for (const stage of stages) {
+        setActiveStage(stage);
+        await new Promise(r => setTimeout(r, 400));
+        setCompletedStages(prev => [...prev, stage]);
+      }
+      setActiveStage(null);
+    })();
 
-    setActiveStage(null);
-    setResult(MOCK_RESPONSE);
-    setIsLoading(false);
+    try {
+      const response = await fetch('/api/v1/ask/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query, top_k: 5 }),
+      });
+
+      await stagePromise;
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || `Request failed (${response.status})`);
+      }
+
+      const data = await response.json();
+      setResult({
+        answer: data.answer,
+        integrityScore: data.citation_integrity ?? 0,
+        citations: (data.citations || []).map(c => ({
+          filename: c.document_name,
+          page: c.page_number,
+          sectionTitle: c.section_title,
+          textSnippet: c.text_snippet,
+          nodeCount: 1,
+          score: 0.9,
+        })),
+      });
+    } catch (err) {
+      await stagePromise;
+      console.error('Search error:', err);
+      setSearchError(err.message || 'Search failed.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleNavigate = (tab) => setActiveTab(tab);
+
+  const handleOpenViewer = (citation) => {
+    if (citation) {
+      setViewerFilename(citation.filename || 'STRAT_FINAL.PDF');
+      setViewerPage(citation.page || 1);
+    }
+    setSelectedCitation(null);
+    setActiveTab('viewer');
   };
 
   const renderModule = () => {
     switch (activeTab) {
       case 'dashboard':
-        return <Dashboard />;
+        return <Dashboard onNavigate={handleNavigate} />;
       case 'ingest':
         return <UploadPanel />;
       case 'search':
@@ -86,16 +129,31 @@ function App() {
               </div>
             )}
 
+            {searchError && !isLoading && (
+              <div style={{
+                padding: '12px 16px',
+                margin: '12px 0',
+                borderRadius: 'var(--radius)',
+                border: '1px solid var(--status-red)',
+                color: '#f8d7da',
+                fontFamily: 'var(--font-mono)',
+                fontSize: '0.75rem',
+              }}>
+                ⚠ {searchError}
+              </div>
+            )}
+
             {selectedCitation && (
               <CitationInspector
                 citation={selectedCitation}
                 onClose={() => setSelectedCitation(null)}
+                onOpenViewer={handleOpenViewer}
               />
             )}
           </div>
         );
       case 'viewer':
-        return <DocumentViewer />;
+        return <DocumentViewer initialPage={viewerPage} filename={viewerFilename} />;
       case 'settings':
         return <Settings />;
       default:

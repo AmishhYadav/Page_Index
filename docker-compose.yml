@@ -53,14 +53,18 @@ services:
     volumes:
       - ./backend/index_data.json:/app/index_data.json
     restart: unless-stopped
+    networks:
+      - pageindex_net
 
   frontend:
-    build: ./frontend
+    build: ./frontend_prod
     ports:
       - "3000:80"
     depends_on:
-      - backend
+      - api
     restart: unless-stopped
+    networks:
+      - pageindex_net
 
 volumes:
   postgres_data:

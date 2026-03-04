@@ -54,7 +54,7 @@ async def ask_question(
     validator = CitationValidator()
     validation = validator.validate(
         answer=llm_output["answer"],
-        context_sources=[c.dict() for c in citations] if citations else [],
+        context_sources=[c.model_dump() for c in citations] if citations else [],
     )
 
     return AskResponse(
