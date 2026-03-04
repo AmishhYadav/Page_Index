@@ -1,3 +1,4 @@
+version: "3.8"
 
 services:
   api:
@@ -45,10 +46,25 @@ services:
     networks:
       - pageindex_net
 
+  backend:
+    build: ./backend
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./backend/index_data.json:/app/index_data.json
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend_prod
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
 volumes:
   postgres_data:
   qdrant_data:
-
 
 networks:
   pageindex_net:

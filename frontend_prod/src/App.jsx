@@ -1,13 +1,4 @@
-import React, { useState, useCallback } from 'react';
-import AppLayout from './components/AppLayout';
-import QueryPanel from './components/QueryPanel';
-import AnswerPanel from './components/AnswerPanel';
-import PipelineTelemetry from './components/PipelineTelemetry';
-import CitationInspector from './components/CitationInspector';
-import Dashboard from './components/Dashboard';
-import UploadPanel from './components/UploadPanel';
-import DocumentViewer from './components/DocumentViewer';
-import Settings from './components/Settings';
+import { useState, useCallback } from "react";
 import SearchBar from "./components/SearchBar";
 import ResultCard from "./components/ResultCard";
 import IndexForm from "./components/IndexForm";
@@ -24,17 +15,6 @@ function App() {
   const [indexError, setIndexError] = useState("");
   const [indexLoading, setIndexLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("search");
-  const [isLoading, setIsLoading] = useState(false);
-  const [activeStage, setActiveStage] = useState(null);
-  const [completedStages, setCompletedStages] = useState([]);
-  const [result, setResult] = useState(null);
-  const [selectedCitation, setSelectedCitation] = useState(null);
-
-  // Viewer state for cross-link navigation
-  const [viewerContext, setViewerContext] = useState({
-    filename: 'STRAT_FINAL.PDF',
-    page: 1
-  });
 
   const handleSearch = useCallback(async (query) => {
     if (!query.trim()) {
@@ -119,77 +99,60 @@ function App() {
     }
   }, []);
 
-  const handleOpenViewer = (citation) => {
-    setViewerContext({
-      filename: citation.filename,
-      page: citation.page
-    });
-    setActiveTab('viewer');
-    setSelectedCitation(null);
-  };
+  return (
+    <div className="app">
+      <header className="app-header">
+        <h1>📄 Page Index</h1>
+        <p>Index and search web pages</p>
+        <nav className="tabs">
+          <button
+            className={activeTab === "search" ? "active" : ""}
+            onClick={() => setActiveTab("search")}
+          >
+            🔍 Search
+          </button>
+          <button
+            className={activeTab === "index" ? "active" : ""}
+            onClick={() => setActiveTab("index")}
+          >
+            ➕ Index Page
+          </button>
+        </nav>
+      </header>
 
-  const renderModule = () => {
-    switch (activeTab) {
-      case 'dashboard':
-        return <Dashboard onNavigate={setActiveTab} />;
-      case 'ingest':
-        return <UploadPanel />;
-      case 'search':
-        return (
-          <div style={{ maxWidth: '900px', margin: '0 auto', position: 'relative' }}>
-            <QueryPanel onSearch={handleSearch} isLoading={isLoading} />
+      <main className="app-main">
+        {activeTab === "search" && (
+          <section className="search-section">
+            <SearchBar onSearch={handleSearch} loading={loading} />
 
-            {(isLoading || activeStage) && (
-              <PipelineTelemetry activeStage={activeStage} completedStages={completedStages} />
-            )}
+            {loading && <div className="loading">🔄 Searching...</div>}
 
-            {result && !isLoading && (
-              <AnswerPanel
-                answer={result.answer}
-                citations={result.citations}
-                integrityScore={result.integrityScore}
-                onSelectCitation={setSelectedCitation}
-              />
-            )}
+            {error && !loading && <div className="error-message">{error}</div>}
 
-            {!isLoading && !result && (
-              <div style={{
-                height: '200px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                border: '1px dashed var(--border-slate)',
-                borderRadius: 'var(--radius)',
-                color: 'var(--text-secondary)',
-                fontFamily: 'var(--font-mono)',
-                fontSize: '0.75rem'
-              }}>
-                // Awaiting knowledge query...
+            {searchInfo && !loading && !error && (
+              <div className="search-info">
+                Found {searchInfo.total} result{searchInfo.total !== 1 ? "s" : ""} for &ldquo;{searchInfo.query}&rdquo;
               </div>
             )}
 
-            {selectedCitation && (
-              <CitationInspector
-                citation={selectedCitation}
-                onClose={() => setSelectedCitation(null)}
-                onOpenViewer={handleOpenViewer}
-              />
-            )}
-          </div>
-        );
-      case 'viewer':
-        return <DocumentViewer initialPage={viewerContext.page} filename={viewerContext.filename} />;
-      case 'settings':
-        return <Settings />;
-      default:
-        return <div>Module Under Construction</div>;
-    }
-  };
+            <div className="results">
+              {results.map((result, index) => (
+                <ResultCard key={result.url || index} result={result} rank={index + 1} />
+              ))}
+            </div>
+          </section>
+        )}
 
-  return (
-    <AppLayout activeTab={activeTab} onTabChange={setActiveTab}>
-      {renderModule()}
-    </AppLayout>
+        {activeTab === "index" && (
+          <section className="index-section">
+            <IndexForm onIndex={handleIndex} loading={indexLoading} />
+            {indexLoading && <div className="loading">🔄 Indexing page...</div>}
+            {indexMessage && <div className="success-message">{indexMessage}</div>}
+            {indexError && <div className="error-message">{indexError}</div>}
+          </section>
+        )}
+      </main>
+    </div>
   );
 }
 
