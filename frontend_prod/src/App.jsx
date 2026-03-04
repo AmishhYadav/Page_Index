@@ -4,7 +4,7 @@ import ResultCard from "./components/ResultCard";
 import IndexForm from "./components/IndexForm";
 import "./App.css";
 
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
 
 function App() {
   const [results, setResults] = useState([]);
@@ -51,7 +51,7 @@ function App() {
       }
     } catch (err) {
       if (err.name === "TypeError" && err.message.includes("fetch")) {
-        setError("Cannot connect to server. Make sure the backend is running on port 5000.");
+        setError("Cannot connect to server. Make sure the backend is running on port 5001.");
       } else {
         setError("Search failed. Please try again.");
       }
