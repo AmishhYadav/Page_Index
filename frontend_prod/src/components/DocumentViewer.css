@@ -18,7 +18,28 @@
     padding: 0 1rem;
 }
 
-.doc-name {
+.doc-selector-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.doc-selector {
+    background-color: transparent;
+    border: none;
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    cursor: pointer;
+    outline: none;
+}
+
+.doc-selector option {
+    background-color: var(--bg-graphite);
+    color: var(--text-primary);
+}
+
+.page-indicator {
     font-size: 0.625rem;
     font-family: var(--font-mono);
     color: var(--text-secondary);

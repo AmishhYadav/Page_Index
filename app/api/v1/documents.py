@@ -1,13 +1,22 @@
 from fastapi import APIRouter, UploadFile, File, Depends, HTTPException
 from sqlalchemy.orm import Session
+from typing import List
 from app.db.session import get_db
-from app.schemas.document import IngestionResponse
+from app.schemas.document import IngestionResponse, DocumentListResponse
+from app.models.document import Document
 from app.services.pdf_processor import PDFProcessor
 from app.services.ingestion import IngestionService
 import logging
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+@router.get("/", response_model=List[DocumentListResponse])
+def list_documents(db: Session = Depends(get_db)):
+    """Retrieve all indexed documents."""
+    docs = db.query(Document).order_by(Document.created_at.desc()).all()
+    return docs
+
 
 @router.post("/", response_model=IngestionResponse)
 async def upload_document(

@@ -1,20 +1,63 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Download, Maximize2 } from 'lucide-react';
 import './DocumentViewer.css';
 
 const DocumentViewer = ({ initialPage = 14, filename = "STRAT_FINAL.PDF" }) => {
     const [page, setPage] = useState(initialPage);
     const [zoom, setZoom] = useState(100);
+    const [documents, setDocuments] = useState([]);
+    const [selectedDoc, setSelectedDoc] = useState(filename);
+
+    useEffect(() => {
+        const fetchDocs = async () => {
+            try {
+                const res = await fetch('/api/v1/documents/');
+                if (res.ok) {
+                    const data = await res.json();
+                    setDocuments(data);
+                    if (data.length > 0 && selectedDoc === "STRAT_FINAL.PDF") {
+                        setSelectedDoc(data[0].filename);
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to fetch documents", err);
+            }
+        };
+        fetchDocs();
+    }, []);
+
+    // Also update selection if navigating from citation
+    useEffect(() => {
+        if (filename && filename !== "STRAT_FINAL.PDF") {
+            setSelectedDoc(filename);
+            setPage(initialPage);
+        }
+    }, [filename, initialPage]);
 
     const handleZoomIn = () => setZoom(prev => Math.min(prev + 25, 200));
     const handleZoomOut = () => setZoom(prev => Math.max(prev - 25, 50));
-    const handleNextPage = () => setPage(prev => Math.min(prev + 1, 32));
+    const handleNextPage = () => setPage(prev => Math.min(prev + 1, 100));
     const handlePrevPage = () => setPage(prev => Math.max(prev - 1, 1));
 
     return (
         <div className="document-viewer">
             <div className="viewer-toolbar">
-                <div className="doc-name">{filename.toUpperCase()} [PAGE {page}/32]</div>
+                <div className="doc-selector-container">
+                    <select
+                        className="doc-selector"
+                        value={selectedDoc}
+                        onChange={(e) => { setSelectedDoc(e.target.value); setPage(1); }}
+                    >
+                        {documents.length > 0 ? (
+                            documents.map(doc => (
+                                <option key={doc.id} value={doc.filename}>{doc.filename.toUpperCase()}</option>
+                            ))
+                        ) : (
+                            <option value={selectedDoc}>{selectedDoc.toUpperCase()}</option>
+                        )}
+                    </select>
+                    <span className="page-indicator">[PAGE {page}]</span>
+                </div>
                 <div className="toolbar-actions">
                     <div className="zoom-controls">
                         <button className="tool-btn" onClick={handleZoomOut}><ZoomOut size={14} /></button>

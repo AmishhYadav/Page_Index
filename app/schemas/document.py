@@ -38,3 +38,13 @@ class IngestionResponse(BaseModel):
     document_id: UUID4
     status: str
     message: str
+
+class DocumentListResponse(BaseModel):
+    id: UUID4
+    filename: str
+    status: str
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
