@@ -1,0 +1,148 @@
+.document-viewer {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--panel-gray);
+    border: 1px solid var(--border-slate);
+    border-radius: var(--radius);
+    overflow: hidden;
+}
+
+.viewer-toolbar {
+    height: 40px;
+    background-color: var(--bg-graphite);
+    border-bottom: 1px solid var(--border-slate);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 1rem;
+}
+
+.doc-name {
+    font-size: 0.625rem;
+    font-family: var(--font-mono);
+    color: var(--text-secondary);
+}
+
+.toolbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.zoom-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.zoom-level {
+    font-size: 0.625rem;
+    font-family: var(--font-mono);
+    color: var(--text-secondary);
+    width: 32px;
+    text-align: center;
+}
+
+.tool-btn {
+    color: var(--text-secondary);
+    padding: 0.25rem;
+    border-radius: 2px;
+    transition: all 0.2s ease;
+}
+
+.tool-btn:hover {
+    background-color: var(--panel-gray);
+    color: var(--text-primary);
+}
+
+.toolbar-divider {
+    width: 1px;
+    height: 16px;
+    background-color: var(--border-slate);
+}
+
+.viewer-workspace {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 2rem;
+    background-color: #232527;
+    overflow-y: auto;
+}
+
+.pdf-page-mock {
+    width: 600px;
+    height: 800px;
+    background-color: white;
+    color: #111;
+    padding: 4rem;
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
+    position: relative;
+}
+
+.page-content h3 {
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+    letter-spacing: -0.01em;
+}
+
+.page-content p {
+    font-size: 0.8125rem;
+    line-height: 1.6;
+    margin-bottom: 1rem;
+}
+
+.highlight {
+    background-color: rgba(29, 86, 201, 0.2);
+    border-bottom: 2px solid var(--accent-blue);
+    color: inherit;
+    padding: 0.125rem 0;
+}
+
+.skeleton-line {
+    height: 8px;
+    background-color: #eee;
+    margin-bottom: 0.75rem;
+    border-radius: 4px;
+}
+
+.skeleton-line.large {
+    width: 100%;
+}
+
+.skeleton-line.medium {
+    width: 60%;
+}
+
+.nav-page-btn {
+    color: var(--border-slate);
+    padding: 1rem;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.nav-page-btn:hover {
+    background-color: var(--panel-gray);
+    color: var(--text-secondary);
+}
+
+.viewer-footer {
+    height: 32px;
+    background-color: var(--bg-graphite);
+    border-top: 1px solid var(--border-slate);
+    display: flex;
+    align-items: center;
+    padding: 0 1rem;
+    gap: 1.5rem;
+}
+
+.metadata-badge {
+    font-size: 0.5rem;
+    font-family: var(--font-mono);
+    color: var(--text-secondary);
+    padding: 0.125rem 0.375rem;
+    border: 1px solid var(--border-slate);
+    border-radius: 2px;
+}
